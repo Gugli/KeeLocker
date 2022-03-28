@@ -1,0 +1,6 @@
+*.user
+*.userprefs
+*.suo
+.vs
+/KeeLocker/bin
+/KeeLocker/obj
