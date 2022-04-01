@@ -21,7 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -74,7 +74,6 @@ copy "$(ProjectName).pdb" "%25KeePassPlugins%25\$(ProjectName).pdb"
 </PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-   <LangVersion>5</LangVersion>
-</PropertyGroup>
-
+    <LangVersion>5</LangVersion>
+  </PropertyGroup>
 </Project>

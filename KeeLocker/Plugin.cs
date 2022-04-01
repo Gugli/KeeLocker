@@ -52,14 +52,15 @@ namespace KeeLocker
 		void OnEntryFormShown(object sender, EventArgs e)
 		{
 			KeePass.Forms.PwEntryForm form = sender as KeePass.Forms.PwEntryForm;
-
 			if (form == null)
 				return;
 
 			KeePassLib.PwEntry entry = form.EntryRef;
-			KeePassLib.Collections.ProtectedStringDictionary strings = form.EntryStrings;
-
 			if (entry == null)
+				return;
+
+			KeePassLib.Collections.ProtectedStringDictionary strings = form.EntryStrings;
+			if (strings == null)
 				return;
 
 			System.Windows.Forms.Control[] cs = form.Controls.Find("m_tabMain", true);
@@ -68,7 +69,7 @@ namespace KeeLocker
 
 			System.Windows.Forms.TabControl tabMain = cs[0] as System.Windows.Forms.TabControl;
 
-			System.Windows.Forms.UserControl KeeLockerEntryTab = new KeeLocker.Forms.KeeLockerEntryTab(m_host, this);
+			System.Windows.Forms.UserControl KeeLockerEntryTab = new KeeLocker.Forms.KeeLockerEntryTab(m_host, this, entry, strings);
 
 			System.Windows.Forms.TabPage KeeLockerEntryTabContainer = new System.Windows.Forms.TabPage("KeeLocker");
 			KeeLockerEntryTabContainer.Controls.Add(KeeLockerEntryTab);

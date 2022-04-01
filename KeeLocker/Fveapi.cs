@@ -7,22 +7,38 @@ namespace KeeLocker
 	public class FveApi
 	{
 
-		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 1)]
-		unsafe internal struct FVE_AUTH_ELEMENT
+		[StructLayout(LayoutKind.Explicit, Pack = 1, Size = 584)]
+		internal struct FVE_AUTH_ELEMENT
 		{
+			[FieldOffset(0)]
 			public Int32 MagicValue;
+
+			[FieldOffset(4)]
 			public Int32 MustBeOne;
-			public fixed byte Data[576];
+
+			[FieldOffset(8)]
+			public byte Data_Start;
 		}
 
-		[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 1)]
-		unsafe internal struct FVE_UNLOCK_SETTINGS
+		[StructLayout(LayoutKind.Explicit, Pack = 1)]
+		internal struct FVE_UNLOCK_SETTINGS
 		{
+			[FieldOffset(0x00)]
 			public Int32 rsp_30;
+
+			[FieldOffset(0x04)]
 			public Int32 rsp_34;
+
+			[FieldOffset(0x08)]
 			public Int32 rsp_38;
+
+			[FieldOffset(0x0C)]
 			public Int32 rsp_3C;
-			public FVE_AUTH_ELEMENT** rsp_40;
+
+			[FieldOffset(0x10)]
+			public IntPtr rsp_40; // FVE_AUTH_ELEMENT**
+
+			[FieldOffset(0x18)]
 			public Int64 rsp_48;
 		};
 
@@ -41,13 +57,13 @@ namespace KeeLocker
 		[DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "GetVolumeNameForVolumeMountPointW")]
 		internal static extern bool GetVolumeNameForVolumeMountPoint(string lpszVolumeMountPoint, [Out] StringBuilder lpszVolumeName, uint cchBufferLength);
 		[DllImport("FVEAPI.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "FveAuthElementFromPassPhrase")]
-		internal unsafe static extern HRESULT FveAuthElementFromPassPhrase(string PassPhrase, FVE_AUTH_ELEMENT* AuthElement);
+		internal static extern HRESULT FveAuthElementFromPassPhrase(string PassPhrase, ref FVE_AUTH_ELEMENT AuthElement);
 		[DllImport("FVEAPI.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "FveOpenVolume")]
-		internal unsafe static extern HRESULT FveOpenVolume(string VolumeId, Int32 FlagsMaybe, IntPtr* HVolume);
+		internal static extern HRESULT FveOpenVolume(string VolumeId, Int32 FlagsMaybe, ref IntPtr HVolume);
 		[DllImport("FVEAPI.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "FveUnlockVolumeWithAccessMode")]
-		internal unsafe static extern HRESULT FveUnlockVolumeWithAccessMode(IntPtr HVolume, FVE_UNLOCK_SETTINGS* UnlockSettings, Int32 FlagsMaybe);
+		internal static extern HRESULT FveUnlockVolumeWithAccessMode(IntPtr HVolume, ref FVE_UNLOCK_SETTINGS UnlockSettings, Int32 FlagsMaybe);
 		[DllImport("FVEAPI.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "FveCloseVolume")]
-		internal unsafe static extern HRESULT FveCloseVolume(IntPtr HVolume, FVE_UNLOCK_SETTINGS* UnlockSettings, Int32 FlagsMaybe, Int32 PassPhrase);
+		internal static extern HRESULT FveCloseVolume(IntPtr HVolume, ref FVE_UNLOCK_SETTINGS UnlockSettings, Int32 FlagsMaybe, Int32 PassPhrase);
 
 		public enum Result
 		{
@@ -57,54 +73,97 @@ namespace KeeLocker
 			WrongPassPhrase,
 		}
 
-		public unsafe static Result UnlockVolume(string DriveMountPoint, string PassPhrase)
+		private static IntPtr StructToPointer(object Struct)
 		{
-			FVE_AUTH_ELEMENT AuthElement;
-			AuthElement.MagicValue = 578;
-			AuthElement.MustBeOne = 1;
+			IntPtr Pointer = Marshal.AllocHGlobal(	Marshal.SizeOf(Struct) );
+			Marshal.StructureToPtr(Struct, Pointer, false);
+			return Pointer;
+		}
 
-			HRESULT HResult;
+		public static Result UnlockVolume(string DriveMountPoint, string PassPhrase)
+		{
+			Result R = Result.Ok;
 
-			HResult = FveAuthElementFromPassPhrase(PassPhrase, &AuthElement);
-			if (HResult != 0)
-				return Result.WrongPassPhrase;
+			IntPtr pAuthElement = (IntPtr)0;
+			IntPtr ppAuthElement = (IntPtr)0;
+			IntPtr pUnlockSettings = (IntPtr)0;
+			do
+			{
+				const int MaxVolumeNameLength = 50;
+				StringBuilder VolumeId = new StringBuilder(MaxVolumeNameLength);
 
-			const int MaxVolumeNameLength = 50;
-			StringBuilder VolumeId = new StringBuilder(MaxVolumeNameLength);
+				bool Ok = GetVolumeNameForVolumeMountPoint(DriveMountPoint, VolumeId, (uint)MaxVolumeNameLength);
 
-			bool Ok = GetVolumeNameForVolumeMountPoint(DriveMountPoint, VolumeId, (uint)MaxVolumeNameLength);
+				if (!Ok)
+				{
+					R = Result.DriveNotFound;
+					break;
+				}
 
-			if (!Ok)
-				return Result.DriveNotFound;
+				HRESULT HResult;
 
-			IntPtr HVolume;
-			HResult = FveOpenVolume(VolumeId.ToString(), 0, &HVolume);
-			if (HResult != 0)
-				return Result.Unexpected;
+				FVE_AUTH_ELEMENT AuthElement = new FVE_AUTH_ELEMENT();
+				AuthElement.MagicValue = 578;
+				AuthElement.MustBeOne = 1;
+				HResult = FveAuthElementFromPassPhrase(PassPhrase, ref AuthElement);
+				if (HResult != 0)
+				{
+					R = Result.WrongPassPhrase;
+					break;
+				}
 
-			FVE_AUTH_ELEMENT* pAuthElement = &AuthElement;
+				IntPtr HVolume = (IntPtr)0;
+				HResult = FveOpenVolume(VolumeId.ToString(), 0, ref HVolume);
+				if (HResult != 0)
+				{
+					R = Result.Unexpected;
+					break;
+				}
 
-			FVE_UNLOCK_SETTINGS UnlockSettings;
-			UnlockSettings.rsp_30 = 56;
-			UnlockSettings.rsp_34 = 1;
-			UnlockSettings.rsp_38 = (Int32)FVE_SECRET_TYPE.PassPhrase;
-			UnlockSettings.rsp_3C = 1;
-			UnlockSettings.rsp_40 = &pAuthElement;
-			UnlockSettings.rsp_48 = 0;
+				pAuthElement = StructToPointer(AuthElement);
+				ppAuthElement = StructToPointer(pAuthElement);
 
-			Int32 FlagsMaybe = 0;
-			HResult = FveUnlockVolumeWithAccessMode(HVolume, &UnlockSettings, FlagsMaybe);
-			if (HResult == HRESULT.FVE_E_FAILED_AUTHENTICATION )
-				return Result.WrongPassPhrase;
+				FVE_UNLOCK_SETTINGS UnlockSettings = new FVE_UNLOCK_SETTINGS();
+				UnlockSettings.rsp_30 = 56;
+				UnlockSettings.rsp_34 = 1;
+				UnlockSettings.rsp_38 = (Int32)FVE_SECRET_TYPE.PassPhrase;
+				UnlockSettings.rsp_3C = 1;
+				UnlockSettings.rsp_40 = ppAuthElement;
+				UnlockSettings.rsp_48 = 0;
 
-			if (HResult != 0)
-				return Result.Unexpected;
+				Int32 FlagsMaybe = 0;
+				HResult = FveUnlockVolumeWithAccessMode(HVolume, ref UnlockSettings, FlagsMaybe);
+				if (HResult == HRESULT.FVE_E_FAILED_AUTHENTICATION)
+				{
+					R = Result.WrongPassPhrase;
+					break;
+				}
 
-			HResult = FveCloseVolume(HVolume, &UnlockSettings, FlagsMaybe, (Int32)FVE_SECRET_TYPE.PassPhrase);
-			if (HResult != 0)
-				return Result.Unexpected;
+				if (HResult != 0)
+				{
+					R = Result.Unexpected;
+					break;
+				}
 
-			return Result.Ok;
+				HResult = FveCloseVolume(HVolume, ref UnlockSettings, FlagsMaybe, (Int32)FVE_SECRET_TYPE.PassPhrase);
+				if (HResult != 0)
+				{
+					R = Result.Unexpected;
+					break;
+				}
+
+				// Free the unmanaged memory.
+
+			} while(false);
+
+			if (ppAuthElement != (IntPtr)0)
+				Marshal.FreeHGlobal(ppAuthElement);
+
+			if (pAuthElement != (IntPtr)0)
+				Marshal.FreeHGlobal(pAuthElement);
+
+			return R;
+			
 		}
 	}
 
