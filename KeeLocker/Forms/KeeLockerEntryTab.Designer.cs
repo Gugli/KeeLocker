@@ -58,7 +58,7 @@ namespace KeeLocker.Forms
 			this.cbx_DriveMountPoint.Name = "cbx_DriveMountPoint";
 			this.cbx_DriveMountPoint.Size = new System.Drawing.Size(208, 21);
 			this.cbx_DriveMountPoint.TabIndex = 1;
-			this.cbx_DriveMountPoint.SelectedIndexChanged += new System.EventHandler(this.cbx_DriveMountPoint_SelectedIndexChanged);
+			this.cbx_DriveMountPoint.TextChanged += new System.EventHandler(this.cbx_DriveMountPoint_TextChanged);
 			// 
 			// KeeLockerEntryTab
 			// 
