@@ -80,7 +80,22 @@ namespace KeeLocker
 			return Pointer;
 		}
 
-		public static Result UnlockVolume(string DriveMountPoint, string PassPhrase)
+		public static bool GetDriveGUID(string DriveMountPoint, out string DriveGUID)
+		{
+			const int MaxVolumeNameLength = 50;
+			StringBuilder DriveGUIDWriter = new StringBuilder(MaxVolumeNameLength);
+			
+			bool Ok = GetVolumeNameForVolumeMountPoint(DriveMountPoint, DriveGUIDWriter, (uint)DriveGUIDWriter.MaxCapacity);
+			if (!Ok)
+			{
+				DriveGUID = "";
+				return false;
+			}
+			DriveGUID = DriveGUIDWriter.ToString();
+			return true;
+		}
+
+		public static Result UnlockVolume(string DriveMountPoint, string DriveGUID, string PassPhrase)
 		{
 			Result R = Result.Ok;
 
@@ -89,15 +104,14 @@ namespace KeeLocker
 			IntPtr pUnlockSettings = (IntPtr)0;
 			do
 			{
-				const int MaxVolumeNameLength = 50;
-				StringBuilder VolumeId = new StringBuilder(MaxVolumeNameLength);
-
-				bool Ok = GetVolumeNameForVolumeMountPoint(DriveMountPoint, VolumeId, (uint)MaxVolumeNameLength);
-
-				if (!Ok)
+				if (DriveGUID.Length == 0)
 				{
-					R = Result.DriveNotFound;
-					break;
+					bool Ok = GetDriveGUID(DriveMountPoint, out DriveGUID);
+					if (!Ok)
+					{
+						R = Result.DriveNotFound;
+						break;
+					}
 				}
 
 				HRESULT HResult;
@@ -113,7 +127,7 @@ namespace KeeLocker
 				}
 
 				IntPtr HVolume = (IntPtr)0;
-				HResult = FveOpenVolume(VolumeId.ToString(), 0, ref HVolume);
+				HResult = FveOpenVolume(DriveGUID, 0, ref HVolume);
 				if (HResult != 0)
 				{
 					R = Result.Unexpected;
