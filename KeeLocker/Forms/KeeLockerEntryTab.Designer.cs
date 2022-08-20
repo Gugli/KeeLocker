@@ -57,7 +57,7 @@ namespace KeeLocker.Forms
             "H:\\"});
 			this.cbx_DriveMountPoint.Location = new System.Drawing.Point(135, 21);
 			this.cbx_DriveMountPoint.Name = "cbx_DriveMountPoint";
-			this.cbx_DriveMountPoint.Size = new System.Drawing.Size(218, 21);
+			this.cbx_DriveMountPoint.Size = new System.Drawing.Size(107, 21);
 			this.cbx_DriveMountPoint.TabIndex = 2;
 			this.cbx_DriveMountPoint.Validated += new System.EventHandler(this.cbx_DriveMountPoint_Validated);
 			// 
@@ -78,7 +78,7 @@ namespace KeeLocker.Forms
 			this.btn_Unlock.Name = "btn_Unlock";
 			this.btn_Unlock.Size = new System.Drawing.Size(162, 23);
 			this.btn_Unlock.TabIndex = 6;
-			this.btn_Unlock.Text = "Unlock Volume";
+			this.btn_Unlock.Text = "Unlock Volume Now";
 			this.btn_Unlock.UseVisualStyleBackColor = true;
 			this.btn_Unlock.Click += new System.EventHandler(this.btn_Unlock_Click);
 			// 
@@ -87,10 +87,10 @@ namespace KeeLocker.Forms
 			this.rdo_MountPoint.AutoSize = true;
 			this.rdo_MountPoint.Location = new System.Drawing.Point(18, 22);
 			this.rdo_MountPoint.Name = "rdo_MountPoint";
-			this.rdo_MountPoint.Size = new System.Drawing.Size(111, 17);
+			this.rdo_MountPoint.Size = new System.Drawing.Size(108, 17);
 			this.rdo_MountPoint.TabIndex = 1;
 			this.rdo_MountPoint.TabStop = true;
-			this.rdo_MountPoint.Text = "Drive mountpoint :";
+			this.rdo_MountPoint.Text = "Drive mountpoint:";
 			this.rdo_MountPoint.UseVisualStyleBackColor = true;
 			this.rdo_MountPoint.Click += new System.EventHandler(this.rdo_MountPoint_Click);
 			// 
@@ -99,10 +99,10 @@ namespace KeeLocker.Forms
 			this.rdo_DriveGUID.AutoSize = true;
 			this.rdo_DriveGUID.Location = new System.Drawing.Point(18, 58);
 			this.rdo_DriveGUID.Name = "rdo_DriveGUID";
-			this.rdo_DriveGUID.Size = new System.Drawing.Size(80, 17);
+			this.rdo_DriveGUID.Size = new System.Drawing.Size(83, 17);
 			this.rdo_DriveGUID.TabIndex = 3;
 			this.rdo_DriveGUID.TabStop = true;
-			this.rdo_DriveGUID.Text = "Drive GUID";
+			this.rdo_DriveGUID.Text = "Drive GUID:";
 			this.rdo_DriveGUID.UseVisualStyleBackColor = true;
 			this.rdo_DriveGUID.Click += new System.EventHandler(this.rdo_DriveGUID_Click);
 			// 
@@ -124,25 +124,25 @@ namespace KeeLocker.Forms
 			this.grp_Drive.Controls.Add(this.cbx_DriveMountPoint);
 			this.grp_Drive.Location = new System.Drawing.Point(43, 19);
 			this.grp_Drive.Name = "grp_Drive";
-			this.grp_Drive.Size = new System.Drawing.Size(379, 173);
+			this.grp_Drive.Size = new System.Drawing.Size(379, 139);
 			this.grp_Drive.TabIndex = 7;
 			this.grp_Drive.TabStop = false;
 			this.grp_Drive.Text = "Drive info";
 			// 
 			// btn_DriveGUID
 			// 
-			this.btn_DriveGUID.Location = new System.Drawing.Point(135, 81);
+			this.btn_DriveGUID.Location = new System.Drawing.Point(248, 19);
 			this.btn_DriveGUID.Name = "btn_DriveGUID";
-			this.btn_DriveGUID.Size = new System.Drawing.Size(218, 22);
+			this.btn_DriveGUID.Size = new System.Drawing.Size(105, 25);
 			this.btn_DriveGUID.TabIndex = 6;
-			this.btn_DriveGUID.Text = "Fill drive GUID";
+			this.btn_DriveGUID.Text = "Convert to GUID";
 			this.btn_DriveGUID.UseVisualStyleBackColor = true;
 			this.btn_DriveGUID.Click += new System.EventHandler(this.btn_DriveGUID_Click);
 			// 
 			// lbl_DriveGUID
 			// 
 			this.lbl_DriveGUID.AutoSize = true;
-			this.lbl_DriveGUID.Location = new System.Drawing.Point(59, 117);
+			this.lbl_DriveGUID.Location = new System.Drawing.Point(62, 93);
 			this.lbl_DriveGUID.Name = "lbl_DriveGUID";
 			this.lbl_DriveGUID.Size = new System.Drawing.Size(255, 26);
 			this.lbl_DriveGUID.TabIndex = 5;
@@ -152,7 +152,7 @@ namespace KeeLocker.Forms
 			// 
 			this.grp_Unlock.Controls.Add(this.chk_UnlockOnOpening);
 			this.grp_Unlock.Controls.Add(this.btn_Unlock);
-			this.grp_Unlock.Location = new System.Drawing.Point(43, 198);
+			this.grp_Unlock.Location = new System.Drawing.Point(43, 164);
 			this.grp_Unlock.Name = "grp_Unlock";
 			this.grp_Unlock.Size = new System.Drawing.Size(379, 76);
 			this.grp_Unlock.TabIndex = 8;
@@ -167,7 +167,7 @@ namespace KeeLocker.Forms
 			this.Controls.Add(this.grp_Unlock);
 			this.Controls.Add(this.grp_Drive);
 			this.Name = "KeeLockerEntryTab";
-			this.Size = new System.Drawing.Size(483, 293);
+			this.Size = new System.Drawing.Size(483, 268);
 			this.grp_Drive.ResumeLayout(false);
 			this.grp_Drive.PerformLayout();
 			this.grp_Unlock.ResumeLayout(false);

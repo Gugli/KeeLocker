@@ -103,6 +103,7 @@ namespace KeeLocker.Forms
 			rdo_DriveGUID.Checked = m_DriveIdType == KeeLockerExt.EDriveIdType.GUID;
 
 			cbx_DriveMountPoint.Enabled = rdo_MountPoint.Checked;
+			btn_DriveGUID.Enabled = rdo_MountPoint.Checked;
 			txt_DriveGUID.Enabled = rdo_DriveGUID.Checked;
 
 			chk_UnlockOnOpening.Checked = m_UnlockOnOpening;
