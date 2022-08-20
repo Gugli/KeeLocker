@@ -169,9 +169,14 @@ namespace KeeLocker
 				KeePassLib.Security.ProtectedString DriveIdTypeStr = Strings.Get(StringName_DriveIdType);
 				KeePassLib.Security.ProtectedString DriveMountPoint = Strings.Get(StringName_DriveMountPoint);
 				KeePassLib.Security.ProtectedString DriveGUID = Strings.Get(StringName_DriveGUID);
+				KeePassLib.Security.ProtectedString UnlockOnOpening = Strings.Get(StringName_UnlockOnOpening);
 				KeePassLib.Security.ProtectedString Password = Strings.Get("Password");
+				bool UnlockOnOpening_bool = UnlockOnOpening == null || UnlockOnOpening.ReadString().Trim().ToLower() != "false";
 
 				if (Password == null)
+					continue;
+
+				if (!UnlockOnOpening_bool)
 					continue;
 
 				EDriveIdType DriveIdType = Forms.KeeLockerEntryTab.GetDriveIdTypeFromString(DriveIdTypeStr);
