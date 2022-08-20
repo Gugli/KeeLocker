@@ -17,7 +17,7 @@ If you have a static drive (let's say a HDD bound to "D:") encrypted with bitloc
   -  put the password for the drive in the entry usual password field
   -  Select "D:" as drive mountpoint in the KeeLocker tab
 
-You can the either tick the checkbox "Unlock volume on opening" that will do so when the Database is opened (but that requires to close then open the DB). Or you can click "Unlock Volume" to test it right now.
+You can the either tick the checkbox "Unlock volume on opening" that will do so when the Database is opened (but that requires to close then open the DB). Or you can click "Unlock Volume Now" to test it right now.
 
 ## What is the use of *Drive GUID*
 
