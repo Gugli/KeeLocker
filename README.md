@@ -19,7 +19,7 @@ If you have a static drive (let's say a HDD bound to "D:") encrypted with bitloc
 
 You can the either tick the checkbox "Unlock volume on opening" that will do so when the Database is opened (but that requires to close then open the DB). Or you can click "Unlock Volume Now" to test it right now.
 
-## What is the use of *Drive GUID*
+## When should I use of *Drive GUID* ?
 
 The *Drive GUID* feature is for more complex scenarios.
 
