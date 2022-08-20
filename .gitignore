@@ -1,6 +1,10 @@
 *.user
 *.userprefs
 *.suo
-.vs
+/.vs
 /KeeLocker/bin
 /KeeLocker/obj
+/KeeLocker_private_signing_key.p8
+/Database.kdbx
+/KeeLocker.plgx
+/RevEng

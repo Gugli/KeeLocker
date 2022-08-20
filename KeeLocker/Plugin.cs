@@ -24,33 +24,6 @@ namespace KeeLocker
 				return "https://raw.github.com/Gugli/KeeLocker/main/VersionInfo.txt";
 			}
 		}
-		/*
-		private void SignVersionFile()
-		{
-			string VersionInfo = "KeeLocker:1.0\n";
-			byte[] VersionInfoBytes = System.Text.Encoding.UTF8.GetBytes(VersionInfo);
-
-			string PrivateKey = System.IO.File.ReadAllText(@"C:\Path\To\Private\Key.xml");
-
-			System.Security.Cryptography.RSACryptoServiceProvider RSA = new System.Security.Cryptography.RSACryptoServiceProvider();
-			RSA.FromXmlString(PrivateKey);
-			RSA.PersistKeyInCsp = false;
-
-			System.Security.Cryptography.SHA512 SHA = new System.Security.Cryptography.SHA512Managed();
-			byte[] Signature = RSA.SignData(VersionInfoBytes, SHA);
-			string SignatureB64 = Convert.ToBase64String(Signature);
-
-			System.Diagnostics.Debug.WriteLine("Signature: " + SignatureB64);
-
-			// Check 
-			{
-				if (!RSA.VerifyData(VersionInfoBytes, SHA, Signature))
-				{
-					System.Diagnostics.Debug.Assert(false);
-				}
-			}
-		}
-		*/
 
 		public override bool Initialize(KeePass.Plugins.IPluginHost host)
 		{
@@ -67,8 +40,6 @@ namespace KeeLocker
 			// register WindowAdded event : needed to add the options tab in the EditEntry window
 			KeePass.UI.GlobalWindowManager.WindowAdded += OnWindowAdded;
 			
-			//SignVersionFile();
-
 			return true;
 		}
 
