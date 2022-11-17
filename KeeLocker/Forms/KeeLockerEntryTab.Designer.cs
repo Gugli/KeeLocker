@@ -39,6 +39,7 @@ namespace KeeLocker.Forms
 			this.btn_DriveGUID = new System.Windows.Forms.Button();
 			this.lbl_DriveGUID = new System.Windows.Forms.Label();
 			this.grp_Unlock = new System.Windows.Forms.GroupBox();
+			this.chk_IsRecoveryKey = new System.Windows.Forms.CheckBox();
 			this.grp_Drive.SuspendLayout();
 			this.grp_Unlock.SuspendLayout();
 			this.SuspendLayout();
@@ -124,7 +125,7 @@ namespace KeeLocker.Forms
 			this.grp_Drive.Controls.Add(this.cbx_DriveMountPoint);
 			this.grp_Drive.Location = new System.Drawing.Point(43, 19);
 			this.grp_Drive.Name = "grp_Drive";
-			this.grp_Drive.Size = new System.Drawing.Size(379, 139);
+			this.grp_Drive.Size = new System.Drawing.Size(379, 129);
 			this.grp_Drive.TabIndex = 7;
 			this.grp_Drive.TabStop = false;
 			this.grp_Drive.Text = "Drive info";
@@ -150,14 +151,26 @@ namespace KeeLocker.Forms
 			// 
 			// grp_Unlock
 			// 
+			this.grp_Unlock.Controls.Add(this.chk_IsRecoveryKey);
 			this.grp_Unlock.Controls.Add(this.chk_UnlockOnOpening);
 			this.grp_Unlock.Controls.Add(this.btn_Unlock);
-			this.grp_Unlock.Location = new System.Drawing.Point(43, 164);
+			this.grp_Unlock.Location = new System.Drawing.Point(43, 154);
 			this.grp_Unlock.Name = "grp_Unlock";
-			this.grp_Unlock.Size = new System.Drawing.Size(379, 76);
+			this.grp_Unlock.Size = new System.Drawing.Size(379, 101);
 			this.grp_Unlock.TabIndex = 8;
 			this.grp_Unlock.TabStop = false;
 			this.grp_Unlock.Text = "Unlock settings";
+			// 
+			// chk_IsRecoveryKey
+			// 
+			this.chk_IsRecoveryKey.AutoSize = true;
+			this.chk_IsRecoveryKey.Location = new System.Drawing.Point(26, 65);
+			this.chk_IsRecoveryKey.Name = "chk_IsRecoveryKey";
+			this.chk_IsRecoveryKey.Size = new System.Drawing.Size(153, 17);
+			this.chk_IsRecoveryKey.TabIndex = 7;
+			this.chk_IsRecoveryKey.Text = "Use password as a recovery key";
+			this.chk_IsRecoveryKey.UseVisualStyleBackColor = true;
+			this.chk_IsRecoveryKey.Click += new System.EventHandler(this.chk_IsRecoveryKey_Click);
 			// 
 			// KeeLockerEntryTab
 			// 
@@ -187,5 +200,6 @@ namespace KeeLocker.Forms
 		private System.Windows.Forms.GroupBox grp_Unlock;
 		private System.Windows.Forms.Button btn_DriveGUID;
 		private System.Windows.Forms.Label lbl_DriveGUID;
+		private System.Windows.Forms.CheckBox chk_IsRecoveryKey;
 	}
 }

@@ -16,6 +16,7 @@ namespace KeeLocker.Forms
 		private string m_DriveMountPoint;
 		private string m_DriveGUID;
 		private bool m_UnlockOnOpening;
+		private bool m_IsRecoveryKey;
 
 		const KeeLockerExt.EDriveIdType DriveIdTypeDefault = KeeLockerExt.EDriveIdType.MountPoint;
 
@@ -31,6 +32,16 @@ namespace KeeLocker.Forms
 					return KeeLockerExt.EDriveIdType.GUID;
 			}
 			return DriveIdTypeDefault;
+		}
+
+		public static bool GetUnlockOnOpeningFromString(KeePassLib.Security.ProtectedString UnlockOnOpening)
+		{
+			return UnlockOnOpening == null || UnlockOnOpening.ReadString().Trim().ToLower() != "false"; // default is to unlock;
+		}
+
+		public static bool GetIsRecoveryKeyFromString(KeePassLib.Security.ProtectedString IsRecoveryKey)
+		{
+			return IsRecoveryKey != null && IsRecoveryKey.ReadString().Trim().ToLower() == "true"; // default is standard password
 		}
 
 		public KeeLockerEntryTab(IPluginHost host, KeeLockerExt plugin, KeePassLib.PwEntry entry, KeePassLib.Collections.ProtectedStringDictionary strings)
@@ -66,7 +77,11 @@ namespace KeeLocker.Forms
 
 			{
 				KeePassLib.Security.ProtectedString UnlockOnOpening = m_entrystrings.Get(KeeLockerExt.StringName_UnlockOnOpening);
-				m_UnlockOnOpening = UnlockOnOpening == null || UnlockOnOpening.ReadString().Trim().ToLower() != "false";
+				m_UnlockOnOpening = GetUnlockOnOpeningFromString(UnlockOnOpening);
+			}
+			{
+				KeePassLib.Security.ProtectedString IsRecoveryKey = m_entrystrings.Get(KeeLockerExt.StringName_IsRecoveryKey);
+				m_IsRecoveryKey = GetIsRecoveryKeyFromString(IsRecoveryKey);
 			}
 		}
 
@@ -92,6 +107,7 @@ namespace KeeLocker.Forms
 			SettingsSave(KeeLockerExt.StringName_DriveMountPoint, m_DriveMountPoint);
 			SettingsSave(KeeLockerExt.StringName_DriveGUID, m_DriveGUID);
 			SettingsSave(KeeLockerExt.StringName_UnlockOnOpening, m_UnlockOnOpening ? "" : "false");
+			SettingsSave(KeeLockerExt.StringName_IsRecoveryKey, m_IsRecoveryKey ? "true" : "");
 		}
 
 		private void UpdateUi()
@@ -107,6 +123,7 @@ namespace KeeLocker.Forms
 			txt_DriveGUID.Enabled = rdo_DriveGUID.Checked;
 
 			chk_UnlockOnOpening.Checked = m_UnlockOnOpening;
+			chk_IsRecoveryKey.Checked = m_IsRecoveryKey;
 		}
 
 		public void OnSave(object sender, EventArgs e)
@@ -147,12 +164,15 @@ namespace KeeLocker.Forms
 		private void btn_Unlock_Click(object sender, EventArgs e)
 		{
 			KeePassLib.Collections.ProtectedStringDictionary Strings = m_entry.Strings;
-			KeePassLib.Security.ProtectedString Password = Strings.Get("Password");
+			KeePassLib.Security.ProtectedString Password = Strings.Get(KeeLockerExt.StringName_Password);
+			KeePassLib.Security.ProtectedString IsRecoveryKey = Strings.Get(KeeLockerExt.StringName_IsRecoveryKey);
 
 			m_plugin.TryUnlockVolume(
 				m_DriveIdType == KeeLockerExt.EDriveIdType.MountPoint ? m_DriveMountPoint : "",
 				m_DriveIdType == KeeLockerExt.EDriveIdType.GUID ? m_DriveGUID : "", 
-				Password != null ? Password.ReadString() : "");
+				Password != null ? Password.ReadString() : "",
+				GetIsRecoveryKeyFromString(IsRecoveryKey)
+				);
 		}
 
 		private void btn_DriveGUID_Click(object sender, EventArgs e)
@@ -169,6 +189,12 @@ namespace KeeLocker.Forms
 				m_DriveGUID = "Unable to get GUID";
 				m_DriveIdType = KeeLockerExt.EDriveIdType.MountPoint;
 			}
+			UpdateUi();
+		}
+
+		private void chk_IsRecoveryKey_Click(object sender, EventArgs e)
+		{
+			m_IsRecoveryKey = !m_IsRecoveryKey;
 			UpdateUi();
 		}
 	}

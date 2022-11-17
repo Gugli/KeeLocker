@@ -7,8 +7,10 @@ namespace KeeLocker
 		public const string StringName_DriveMountPoint = "KeeLockerMountPoint";
 		public const string StringName_DriveGUID = "KeeLockerGUID";
 		public const string StringName_DriveIdType = "KeeLockerType";
-
 		public const string StringName_UnlockOnOpening = "KeeLockerOnOpening";
+		public const string StringName_IsRecoveryKey = "KeeLockerIsRecoveryKey";
+
+		public const string StringName_Password = "Password";
 
 		public enum EDriveIdType
 		{
@@ -97,7 +99,7 @@ namespace KeeLocker
 			btnOk.Click += KeeLockerEntryTab.OnSave;
 		}
 
-		public bool TryUnlockVolume(string DriveMountPoint, string DriveGUID, string Password)
+		public bool TryUnlockVolume(string DriveMountPoint, string DriveGUID, string Password, bool IsRecoveryKey)
 		{
 			string DriveMountPointString;
 			string DriveGUIDString;
@@ -119,7 +121,7 @@ namespace KeeLocker
 
 			try
 			{
-				FveApi.UnlockVolume(DriveMountPointString, DriveGUIDString, Password);
+				FveApi.UnlockVolume(DriveMountPointString, DriveGUIDString, Password, IsRecoveryKey);
 			}
 			catch (Exception Ex)
 			{
@@ -141,8 +143,10 @@ namespace KeeLocker
 				KeePassLib.Security.ProtectedString DriveMountPoint = Strings.Get(StringName_DriveMountPoint);
 				KeePassLib.Security.ProtectedString DriveGUID = Strings.Get(StringName_DriveGUID);
 				KeePassLib.Security.ProtectedString UnlockOnOpening = Strings.Get(StringName_UnlockOnOpening);
-				KeePassLib.Security.ProtectedString Password = Strings.Get("Password");
-				bool UnlockOnOpening_bool = UnlockOnOpening == null || UnlockOnOpening.ReadString().Trim().ToLower() != "false";
+				KeePassLib.Security.ProtectedString IsRecoveryKey = Strings.Get(StringName_IsRecoveryKey);
+				KeePassLib.Security.ProtectedString Password = Strings.Get(StringName_Password);
+				bool UnlockOnOpening_bool = Forms.KeeLockerEntryTab.GetUnlockOnOpeningFromString(UnlockOnOpening);
+				bool IsRecoveryKey_bool = Forms.KeeLockerEntryTab.GetIsRecoveryKeyFromString(IsRecoveryKey);
 
 				if (Password == null)
 					continue;
@@ -155,7 +159,8 @@ namespace KeeLocker
 				TryUnlockVolume(
 					DriveIdType == EDriveIdType.MountPoint && DriveMountPoint != null ? DriveMountPoint.ReadString() : "",
 					DriveIdType == EDriveIdType.GUID && DriveGUID != null ? DriveGUID.ReadString() : "",
-					Password.ReadString()
+					Password.ReadString(),
+					IsRecoveryKey_bool
 					);
 			}
 		}
