@@ -29,7 +29,7 @@ namespace KeeLocker.Forms
 		/// </summary>
 		private void InitializeComponent()
 		{
-			this.cbx_DriveMountPoint = new System.Windows.Forms.ComboBox();
+			this.cbx_DriveMountPoint = new KeeLocker.Forms.RichComboBox();
 			this.chk_UnlockOnOpening = new System.Windows.Forms.CheckBox();
 			this.btn_Unlock = new System.Windows.Forms.Button();
 			this.rdo_MountPoint = new System.Windows.Forms.RadioButton();
@@ -46,19 +46,20 @@ namespace KeeLocker.Forms
 			// 
 			// cbx_DriveMountPoint
 			// 
-			this.cbx_DriveMountPoint.FormattingEnabled = true;
-			this.cbx_DriveMountPoint.Items.AddRange(new object[] {
-            "A:\\",
-            "B:\\",
-            "C:\\",
-            "D:\\",
-            "E:\\",
-            "F:\\",
-            "G:\\",
-            "H:\\"});
+			this.cbx_DriveMountPoint.Item_Add(new KeeLocker.Forms.RichComboBox.SItem("Can be a drive root like :", RichComboBox.EItemType.Inactive));
+			this.cbx_DriveMountPoint.Item_Add(new KeeLocker.Forms.RichComboBox.SItem("C:\\", RichComboBox.EItemType.Active));
+			this.cbx_DriveMountPoint.Item_Add(new KeeLocker.Forms.RichComboBox.SItem("D:\\", RichComboBox.EItemType.Active));
+			this.cbx_DriveMountPoint.Item_Add(new KeeLocker.Forms.RichComboBox.SItem("E:\\", RichComboBox.EItemType.Active));
+			this.cbx_DriveMountPoint.Item_Add(new KeeLocker.Forms.RichComboBox.SItem("F:\\", RichComboBox.EItemType.Active));
+			this.cbx_DriveMountPoint.Item_Add(new KeeLocker.Forms.RichComboBox.SItem("Or any valid mountpoint path", RichComboBox.EItemType.Inactive));
+			this.cbx_DriveMountPoint.Item_Add(new KeeLocker.Forms.RichComboBox.SItem("C:\\Path\\To\\MountPoint", RichComboBox.EItemType.Active));
+			this.cbx_DriveMountPoint.Item_Add(new KeeLocker.Forms.RichComboBox.SItem("Or more exotic mountpoints", RichComboBox.EItemType.Inactive));
+			this.cbx_DriveMountPoint.Item_Add(new KeeLocker.Forms.RichComboBox.SItem("like network drives, etc...", RichComboBox.EItemType.Inactive));
+			this.cbx_DriveMountPoint.MaxDropDownItems = this.cbx_DriveMountPoint.Items.Count;
+
 			this.cbx_DriveMountPoint.Location = new System.Drawing.Point(135, 21);
 			this.cbx_DriveMountPoint.Name = "cbx_DriveMountPoint";
-			this.cbx_DriveMountPoint.Size = new System.Drawing.Size(107, 21);
+			this.cbx_DriveMountPoint.Size = new System.Drawing.Size(218, 21);
 			this.cbx_DriveMountPoint.TabIndex = 2;
 			this.cbx_DriveMountPoint.Validated += new System.EventHandler(this.cbx_DriveMountPoint_Validated);
 			// 
@@ -98,7 +99,7 @@ namespace KeeLocker.Forms
 			// rdo_DriveGUID
 			// 
 			this.rdo_DriveGUID.AutoSize = true;
-			this.rdo_DriveGUID.Location = new System.Drawing.Point(18, 58);
+			this.rdo_DriveGUID.Location = new System.Drawing.Point(18, 99);
 			this.rdo_DriveGUID.Name = "rdo_DriveGUID";
 			this.rdo_DriveGUID.Size = new System.Drawing.Size(83, 17);
 			this.rdo_DriveGUID.TabIndex = 3;
@@ -109,7 +110,7 @@ namespace KeeLocker.Forms
 			// 
 			// txt_DriveGUID
 			// 
-			this.txt_DriveGUID.Location = new System.Drawing.Point(135, 55);
+			this.txt_DriveGUID.Location = new System.Drawing.Point(135, 96);
 			this.txt_DriveGUID.Name = "txt_DriveGUID";
 			this.txt_DriveGUID.Size = new System.Drawing.Size(218, 20);
 			this.txt_DriveGUID.TabIndex = 4;
@@ -125,25 +126,25 @@ namespace KeeLocker.Forms
 			this.grp_Drive.Controls.Add(this.cbx_DriveMountPoint);
 			this.grp_Drive.Location = new System.Drawing.Point(43, 19);
 			this.grp_Drive.Name = "grp_Drive";
-			this.grp_Drive.Size = new System.Drawing.Size(379, 129);
+			this.grp_Drive.Size = new System.Drawing.Size(379, 162);
 			this.grp_Drive.TabIndex = 7;
 			this.grp_Drive.TabStop = false;
 			this.grp_Drive.Text = "Drive info";
 			// 
 			// btn_DriveGUID
 			// 
-			this.btn_DriveGUID.Location = new System.Drawing.Point(248, 19);
+			this.btn_DriveGUID.Location = new System.Drawing.Point(135, 48);
 			this.btn_DriveGUID.Name = "btn_DriveGUID";
-			this.btn_DriveGUID.Size = new System.Drawing.Size(105, 25);
+			this.btn_DriveGUID.Size = new System.Drawing.Size(218, 25);
 			this.btn_DriveGUID.TabIndex = 6;
-			this.btn_DriveGUID.Text = "Convert to GUID";
+			this.btn_DriveGUID.Text = "Convert mountpoint to GUID";
 			this.btn_DriveGUID.UseVisualStyleBackColor = true;
 			this.btn_DriveGUID.Click += new System.EventHandler(this.btn_DriveGUID_Click);
 			// 
 			// lbl_DriveGUID
 			// 
 			this.lbl_DriveGUID.AutoSize = true;
-			this.lbl_DriveGUID.Location = new System.Drawing.Point(62, 93);
+			this.lbl_DriveGUID.Location = new System.Drawing.Point(62, 125);
 			this.lbl_DriveGUID.Name = "lbl_DriveGUID";
 			this.lbl_DriveGUID.Size = new System.Drawing.Size(255, 26);
 			this.lbl_DriveGUID.TabIndex = 5;
@@ -154,7 +155,7 @@ namespace KeeLocker.Forms
 			this.grp_Unlock.Controls.Add(this.chk_IsRecoveryKey);
 			this.grp_Unlock.Controls.Add(this.chk_UnlockOnOpening);
 			this.grp_Unlock.Controls.Add(this.btn_Unlock);
-			this.grp_Unlock.Location = new System.Drawing.Point(43, 154);
+			this.grp_Unlock.Location = new System.Drawing.Point(43, 187);
 			this.grp_Unlock.Name = "grp_Unlock";
 			this.grp_Unlock.Size = new System.Drawing.Size(379, 101);
 			this.grp_Unlock.TabIndex = 8;
@@ -166,7 +167,7 @@ namespace KeeLocker.Forms
 			this.chk_IsRecoveryKey.AutoSize = true;
 			this.chk_IsRecoveryKey.Location = new System.Drawing.Point(26, 65);
 			this.chk_IsRecoveryKey.Name = "chk_IsRecoveryKey";
-			this.chk_IsRecoveryKey.Size = new System.Drawing.Size(153, 17);
+			this.chk_IsRecoveryKey.Size = new System.Drawing.Size(180, 17);
 			this.chk_IsRecoveryKey.TabIndex = 7;
 			this.chk_IsRecoveryKey.Text = "Use password as a recovery key";
 			this.chk_IsRecoveryKey.UseVisualStyleBackColor = true;
@@ -180,7 +181,7 @@ namespace KeeLocker.Forms
 			this.Controls.Add(this.grp_Unlock);
 			this.Controls.Add(this.grp_Drive);
 			this.Name = "KeeLockerEntryTab";
-			this.Size = new System.Drawing.Size(483, 268);
+			this.Size = new System.Drawing.Size(483, 311);
 			this.grp_Drive.ResumeLayout(false);
 			this.grp_Drive.PerformLayout();
 			this.grp_Unlock.ResumeLayout(false);
@@ -190,7 +191,7 @@ namespace KeeLocker.Forms
 		}
 
 		#endregion
-		private System.Windows.Forms.ComboBox cbx_DriveMountPoint;
+		private RichComboBox cbx_DriveMountPoint;
 		private System.Windows.Forms.CheckBox chk_UnlockOnOpening;
 		private System.Windows.Forms.Button btn_Unlock;
 		private System.Windows.Forms.RadioButton rdo_MountPoint;
