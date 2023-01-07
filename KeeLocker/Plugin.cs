@@ -191,7 +191,8 @@ namespace KeeLocker
 			
 		private void OnKPDBOpen(object sender, KeePass.Forms.FileOpenedEventArgs e)
 		{
-			UnlockDatabase(e.Database);
+			const bool IsDatabaseOpening = true;
+			UnlockDatabase(e.Database, IsDatabaseOpening);
 		}
 
 		private void UnlockAll(object sender, EventArgs e)
@@ -205,12 +206,12 @@ namespace KeeLocker
 
 		private void UnlockThisDB(object sender, EventArgs e)
 		{
-			UnlockDatabase(m_host.MainWindow.ActiveDatabase);
+			UnlockDatabase(m_host.MainWindow.ActiveDatabase, false);
 		}
 
 		private void UnlockGroup(object sender, EventArgs e)
 		{
-			UnlockGroup(m_host.MainWindow.GetSelectedGroup());
+			UnlockGroup(m_host.MainWindow.GetSelectedGroup(), false);
 		}
 
 		private void UnlockEntries(object sender, EventArgs e)
@@ -219,26 +220,26 @@ namespace KeeLocker
 			if (Entries == null) return;
 			foreach (KeePassLib.PwEntry Entry in Entries)
 			{
-				UnlockEntry(Entry);
+				UnlockEntry(Entry, false);
 			}
 		}
 
-		private void UnlockDatabase(KeePassLib.PwDatabase Database)
+		private void UnlockDatabase(KeePassLib.PwDatabase Database, bool IsDatabaseOpening)
 		{
-			UnlockGroup(Database.RootGroup);
+			UnlockGroup(Database.RootGroup, IsDatabaseOpening);
 		}
 
-		private void UnlockGroup(KeePassLib.PwGroup Group)
+		private void UnlockGroup(KeePassLib.PwGroup Group, bool IsDatabaseOpening)
 		{
 			if (Group == null) return;
 			KeePassLib.Collections.PwObjectList<KeePassLib.PwEntry> AllEntries = Group.GetEntries(true);
 			foreach (KeePassLib.PwEntry Entry in AllEntries)
 			{
-				UnlockEntry(Entry);
+				UnlockEntry(Entry, IsDatabaseOpening);
 			}
 		}
 
-		private void UnlockEntry(KeePassLib.PwEntry Entry)
+		private void UnlockEntry(KeePassLib.PwEntry Entry, bool IsDatabaseOpening)
 		{
 			if (Entry == null) return;
 			KeePassLib.Collections.ProtectedStringDictionary Strings = Entry.Strings;
@@ -254,7 +255,7 @@ namespace KeeLocker
 			if (Password == null)
 				return;
 
-			if (!UnlockOnOpening_bool)
+			if (IsDatabaseOpening && !UnlockOnOpening_bool)
 				return;
 
 			EDriveIdType DriveIdType = Forms.KeeLockerEntryTab.GetDriveIdTypeFromString(DriveIdTypeStr);
