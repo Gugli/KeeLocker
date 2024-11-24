@@ -1,10 +1,90 @@
-﻿using System;
+﻿using KeePass.Forms;
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Windows.Forms;
 
 namespace KeeLocker
 {
-	public class KeeLockerExt : KeePass.Plugins.Plugin
+    using NTSTATUS = Int32;
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	delegate int CallbackDelegate(
+					ulong StateName,
+					int ChangeStamp,
+					IntPtr TypeId,
+					IntPtr CallbackContext,
+					IntPtr Buffer,
+					int BufferSize);
+    public class KeeLockerExt : KeePass.Plugins.Plugin
 	{
-		public const string StringName_DriveMountPoint = "KeeLockerMountPoint";
+        CallbackDelegate mCallBAck;
+		int callback_count = 0;
+
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS RtlSubscribeWnfStateChangeNotification(
+			out IntPtr Subscription,
+			ulong StateName,
+			int ChangeStamp,
+			IntPtr Callback,
+			IntPtr CallbackContext,
+			IntPtr TypeId,
+			int SerializationGroup,
+			int Unknown);
+
+        private int NotifyCallback(
+			ulong stateName,
+			int nChangeStamp,
+			IntPtr pTypeId,
+			IntPtr pCallbackContext,
+			IntPtr pBuffer,
+			int nBufferSize)
+        {
+			if (callback_count++ == 0)
+				return 0 ;
+			if (pBuffer == IntPtr.Zero && nBufferSize == 0 && nChangeStamp == 0)
+			{
+			}
+			else
+			{
+				if (m_host.Database != null)
+				{
+					if (!m_host.Database.IsOpen && KeePass.UI.GlobalWindowManager.WindowCount == 0)
+					{
+						m_host.MainWindow.BeginInvoke(new Action(() => 
+						m_host.MainWindow.OpenDatabase(m_host.MainWindow.DocumentManager.ActiveDocument.LockedIoc, null, false)));
+					}
+					else
+					{
+						m_host.MainWindow.BeginInvoke(new Action(() =>
+						{
+							UnlockDatabase(m_host.MainWindow.ActiveDatabase, false);
+						}));
+					}
+				}
+			}
+            return 0;
+
+        }
+        public NTSTATUS Listen()
+		{
+			NTSTATUS ntstatus = 0;
+			IntPtr hEvent = IntPtr.Zero;
+			IntPtr pContextBuffer = IntPtr.Zero;
+			IntPtr pSubscription = IntPtr.Zero;
+			mCallBAck = new CallbackDelegate(NotifyCallback);
+			ntstatus = RtlSubscribeWnfStateChangeNotification(
+				out pSubscription,
+                0x4183182BA3BC3875UL,
+				0,
+                Marshal.GetFunctionPointerForDelegate(mCallBAck),
+                IntPtr.Zero,
+				IntPtr.Zero,
+				0,
+				0);
+			return ntstatus;
+		}
+
+        public const string StringName_DriveMountPoint = "KeeLockerMountPoint";
 		public const string StringName_DriveGUID = "KeeLockerGUID";
 		public const string StringName_DriveIdType = "KeeLockerType";
 		public const string StringName_UnlockOnOpening = "KeeLockerOnOpening";
@@ -33,6 +113,7 @@ namespace KeeLocker
 				return false;
 			m_host = host;
 
+			Listen();
 			// Signed update checks
 			KeePass.Util.UpdateCheckEx.SetFileSigKey(UpdateUrl, "<RSAKeyValue><Modulus>0N6jerZiraXQTGZ2kqbQHCOs1pjyFRmHwG6zVQwWQ5M0YONrT5nEJGBCOJ8gliJ+/ONerm8JfrB9eycsvq6cYNGC9WvGTVt81KDhnOlCSPdHkB3qtPU5Vin4UIFNjCmb0/Bnz7hyoVjACqNQUSeIWFSTPtNw2/H7EK+YZpGbdD540QxdRzZUWi50AxS1kCYUzvj1zYjuXBHw7YMP/GFQIuFBJrZUv1nQwVG1+j4u6aWe8wP5RXzm0LpdLtc9JeoVfP1DBujuugKxpOXXDzB+YPI5RIIAOEc3qd4BNZkLOU3JEdGu/MCWL7GgHQOlGjR+jWpKGGkUWFplkCA7YRtKAlRQRQY3Id9wKjinhTyhhZ7r9qkHK8m2dCVaL8F2dXj8KTSZZWIZHV56a6Kou2Kw0Vq9ra6Wt6uZH1lLX3h05ygDe3Gm5rxax150ScjQHBhHxTo03xzaif5AP1zW0eCeCDfH37dPjZBUQb/zEy0pqbKATwMAFdMLWKCS5hy+a5L5xhd+WIf0OW6AgapA4O/xFABucSFVh9Ugpzvy9j5Gb4+9+aygGlnktprZDBAI5t9QEZz8Vkjxv+nKplPPH37f01K7mIzSjsxnGmcBM4CFVPjfG0i9eAa+4pVqFgXaW3TNQjWON8sMrslCqaFB+0s79MuJbps2awevB+hyssCOacE=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>");
 
