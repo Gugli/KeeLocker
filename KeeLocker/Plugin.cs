@@ -1,6 +1,8 @@
 ﻿using KeePass.Forms;
 using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Forms;
 
@@ -15,10 +17,37 @@ namespace KeeLocker
 					IntPtr CallbackContext,
 					IntPtr Buffer,
 					int BufferSize);
+    [StructLayout(LayoutKind.Sequential)]
+    struct LIST_ENTRY
+    {
+        System.IntPtr Flink;
+        System.IntPtr Blink;
+	}
+    [StructLayout(LayoutKind.Sequential)]
+    struct WNF_CONTEXT_HEADER
+    {
+        System.UInt16 NodeTypeCode;
+        System.UInt16 NodeByteSize;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    struct WNF_USER_SUBSCRIPTION
+    {
+        WNF_CONTEXT_HEADER Header;
+        LIST_ENTRY SubscriptionsListEntry;
+        System.IntPtr NameSubscription;
+        System.IntPtr Callback;
+        System.IntPtr CallbackContext;
+        System.UInt64 SubProcessTag;
+        public int CurrentChangeStamp;
+        int DeliveryOptions;
+        int SubscribedEventSet;
+        System.IntPtr SerializationGroup;
+        int UserSubscriptionCount;
+    }
     public class KeeLockerExt : KeePass.Plugins.Plugin
 	{
         CallbackDelegate mCallBAck;
-		int callback_count = 0;
+		IntPtr pSubscription = IntPtr.Zero;
 
         [DllImport("ntdll.dll")]
         public static extern NTSTATUS RtlSubscribeWnfStateChangeNotification(
@@ -30,6 +59,8 @@ namespace KeeLocker
 			IntPtr TypeId,
 			int SerializationGroup,
 			int Unknown);
+        [DllImport("ntdll.dll")]
+        public static extern NTSTATUS RtlUnsubscribeWnfStateChangeNotification(IntPtr Subscription);
 
         private int NotifyCallback(
 			ulong stateName,
@@ -39,27 +70,28 @@ namespace KeeLocker
 			IntPtr pBuffer,
 			int nBufferSize)
         {
-			if (callback_count++ == 0)
-				return 0 ;
-			if (pBuffer == IntPtr.Zero && nBufferSize == 0 && nChangeStamp == 0)
+            WNF_USER_SUBSCRIPTION sub = (WNF_USER_SUBSCRIPTION)	Marshal.PtrToStructure(pSubscription, typeof(WNF_USER_SUBSCRIPTION));
+			if (sub.CurrentChangeStamp == 0)
+				return 0;
+
+            if (pBuffer == IntPtr.Zero && nBufferSize == 0 && nChangeStamp == 0)
 			{
 			}
 			else
 			{
-				if (m_host.Database != null)
+				if (m_host.Database != null && m_host.MainWindow != null)
 				{
-					if (!m_host.Database.IsOpen && KeePass.UI.GlobalWindowManager.WindowCount == 0)
-					{
-						m_host.MainWindow.BeginInvoke(new Action(() => 
-						m_host.MainWindow.OpenDatabase(m_host.MainWindow.DocumentManager.ActiveDocument.LockedIoc, null, false)));
-					}
-					else
-					{
-						m_host.MainWindow.BeginInvoke(new Action(() =>
+                    m_host.MainWindow.BeginInvoke(new Action(() =>
 						{
-							UnlockDatabase(m_host.MainWindow.ActiveDatabase, false);
-						}));
-					}
+
+                            if (!m_host.Database.IsOpen && KeePass.UI.GlobalWindowManager.WindowCount == 0)
+									m_host.MainWindow.OpenDatabase(m_host.MainWindow.DocumentManager.ActiveDocument.LockedIoc, null, false);
+							else
+
+								UnlockDatabase(m_host.MainWindow.ActiveDatabase, false);
+
+                        }
+                    ));
 				}
 			}
             return 0;
@@ -70,12 +102,12 @@ namespace KeeLocker
 			NTSTATUS ntstatus = 0;
 			IntPtr hEvent = IntPtr.Zero;
 			IntPtr pContextBuffer = IntPtr.Zero;
-			IntPtr pSubscription = IntPtr.Zero;
+			pSubscription = IntPtr.Zero;
 			mCallBAck = new CallbackDelegate(NotifyCallback);
 			ntstatus = RtlSubscribeWnfStateChangeNotification(
 				out pSubscription,
-                0x4183182BA3BC3875UL,
-				0,
+                0x4183182BA3BC3875UL, // WNF_FVE_STATE_CHANGE
+                0,
                 Marshal.GetFunctionPointerForDelegate(mCallBAck),
                 IntPtr.Zero,
 				IntPtr.Zero,
@@ -83,6 +115,17 @@ namespace KeeLocker
 				0);
 			return ntstatus;
 		}
+
+		public void StopListen()
+		{
+            if (pSubscription != IntPtr.Zero)
+            {
+                RtlUnsubscribeWnfStateChangeNotification(pSubscription);
+                mCallBAck = null;
+                pSubscription = IntPtr.Zero;
+
+            }
+        }
 
         public const string StringName_DriveMountPoint = "KeeLockerMountPoint";
 		public const string StringName_DriveGUID = "KeeLockerGUID";
@@ -132,7 +175,8 @@ namespace KeeLocker
 			KeePass.UI.GlobalWindowManager.WindowAdded -= OnWindowAdded;
 
 			m_host.MainWindow.FileOpened -= OnKPDBOpen;
-		}
+			StopListen();
+        }
 
 		public override System.Windows.Forms.ToolStripMenuItem GetMenuItem(KeePass.Plugins.PluginMenuType t)
 		{
@@ -260,8 +304,8 @@ namespace KeeLocker
 
 			try
 			{
-				FveApi.UnlockVolume(DriveMountPointString, DriveGUIDString, Password, IsRecoveryKey);
-			}
+				var result = FveApi.UnlockVolume(DriveMountPointString, DriveGUIDString, Password, IsRecoveryKey);
+            }
 			catch (Exception Ex)
 			{
 				string Messages = Ex.ToString();
