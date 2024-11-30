@@ -138,7 +138,7 @@ def DoRelease(selected_tag):
 				files.append( ( cleanname, file.read()) )
 				
 	localdir = os.path.dirname(os.path.realpath(__file__))
-	PackageFiles( os.join(localdir, ".keepassdev", "KeePass.exe"), files)
+	PackageFiles( os.path.join(localdir, ".keepassdev", "KeePass.exe"), files)
 		
 		
 		
