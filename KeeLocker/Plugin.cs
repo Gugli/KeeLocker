@@ -1,6 +1,7 @@
 ﻿using KeePassLib;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace KeeLocker
 {
@@ -155,7 +156,20 @@ namespace KeeLocker
 			btnOk.Click += KeeLockerEntryTab.OnSave;
 		}
 
-		public bool TryUnlockVolume(string DriveMountPoint, string DriveGUID, string Password, bool IsRecoveryKey)
+        void TryUnlockVolume_Thread(string DriveMountPoint, string DriveGUID, string Password, bool IsRecoveryKey)
+		{
+			try
+			{
+                FveApi.UnlockVolume(DriveMountPoint, DriveGUID, Password, IsRecoveryKey);
+			}
+			catch (Exception Ex)
+			{
+				string Messages = Ex.ToString();
+			}
+		}
+
+
+        public bool TryUnlockVolume(string DriveMountPoint, string DriveGUID, string Password, bool IsRecoveryKey)
 		{
 			string DriveMountPointString;
 			string DriveGUIDString;
@@ -174,17 +188,9 @@ namespace KeeLocker
 				return false;
 			}
 
-
-			try
-			{
-				FveApi.UnlockVolume(DriveMountPointString, DriveGUIDString, Password, IsRecoveryKey);
-			}
-			catch (Exception Ex)
-			{
-				string Messages = Ex.ToString();
-				return false;
-			}
-			return true;
+			Thread thread = new Thread(() => TryUnlockVolume_Thread(DriveMountPointString, DriveGUIDString, Password, IsRecoveryKey) );
+			thread.Start();
+            return true;
 		}
 		
 		enum EUnlockReason
