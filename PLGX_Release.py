@@ -136,8 +136,9 @@ def DoRelease(selected_tag):
 			cleanname = os.path.normpath( prefname )
 			with archive.open(info) as file:
 				files.append( ( cleanname, file.read()) )
-			
-	PackageFiles("C:\\Users\\Gugli\\KeePassDEV\\KeePass.exe", files)
+				
+	localdir = os.path.dirname(os.path.realpath(__file__))
+	PackageFiles( os.join(localdir, ".keepassdev", "KeePass.exe"), files)
 		
 		
 		
