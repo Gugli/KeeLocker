@@ -9,9 +9,10 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>KeeLocker</RootNamespace>
     <AssemblyName>KeeLocker</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -69,7 +70,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>set KeePass=$(USERPROFILE)\KeePassDEV\
+    <PostBuildEvent>set KeePass=$(SolutionDir)\.keepassdev\
 set KeePassPlugins=%25KeePass%25plugins\
 
 copy "$(ProjectName).dll" "%25KeePassPlugins%25\$(ProjectName).dll"

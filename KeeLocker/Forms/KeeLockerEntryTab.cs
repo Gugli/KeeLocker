@@ -16,6 +16,7 @@ namespace KeeLocker.Forms
 		private string m_DriveMountPoint;
 		private string m_DriveGUID;
 		private bool m_UnlockOnOpening;
+		private bool m_UnlockOnConnection;
 		private bool m_IsRecoveryKey;
 
 		const KeeLockerExt.EDriveIdType DriveIdTypeDefault = KeeLockerExt.EDriveIdType.MountPoint;
@@ -78,8 +79,12 @@ namespace KeeLocker.Forms
 			{
 				KeePassLib.Security.ProtectedString UnlockOnOpening = m_entrystrings.Get(KeeLockerExt.StringName_UnlockOnOpening);
 				m_UnlockOnOpening = GetUnlockOnOpeningFromString(UnlockOnOpening);
-			}
-			{
+            }
+            {
+                KeePassLib.Security.ProtectedString UnlockOnConnection = m_entrystrings.Get(KeeLockerExt.StringName_UnlockOnConnection);
+                m_UnlockOnConnection = GetUnlockOnOpeningFromString(UnlockOnConnection);
+            }
+            {
 				KeePassLib.Security.ProtectedString IsRecoveryKey = m_entrystrings.Get(KeeLockerExt.StringName_IsRecoveryKey);
 				m_IsRecoveryKey = GetIsRecoveryKeyFromString(IsRecoveryKey);
 			}
@@ -107,6 +112,7 @@ namespace KeeLocker.Forms
 			SettingsSave(KeeLockerExt.StringName_DriveMountPoint, m_DriveMountPoint);
 			SettingsSave(KeeLockerExt.StringName_DriveGUID, m_DriveGUID);
 			SettingsSave(KeeLockerExt.StringName_UnlockOnOpening, m_UnlockOnOpening ? "" : "false");
+			SettingsSave(KeeLockerExt.StringName_UnlockOnConnection, m_UnlockOnConnection ? "" : "false");
 			SettingsSave(KeeLockerExt.StringName_IsRecoveryKey, m_IsRecoveryKey ? "true" : "");
 		}
 
@@ -123,6 +129,7 @@ namespace KeeLocker.Forms
 			txt_DriveGUID.Enabled = rdo_DriveGUID.Checked;
 
 			chk_UnlockOnOpening.Checked = m_UnlockOnOpening;
+            chk_UnlockOnConnection.Checked = m_UnlockOnConnection;
 			chk_IsRecoveryKey.Checked = m_IsRecoveryKey;
 		}
 
@@ -153,11 +160,16 @@ namespace KeeLocker.Forms
 		{
 			m_DriveIdType = KeeLockerExt.EDriveIdType.GUID;
 			UpdateUi();
-		}
+        }
 
-		private void chk_UnlockOnOpening_Click(object sender, EventArgs e)
+        private void chk_UnlockOnOpening_Click(object sender, EventArgs e)
 		{
 			m_UnlockOnOpening = !m_UnlockOnOpening;
+			UpdateUi();
+		}
+		private void chk_UnlockOnConnection_Click(object sender, EventArgs e)
+		{
+            m_UnlockOnConnection = !m_UnlockOnConnection;
 			UpdateUi();
 		}
 

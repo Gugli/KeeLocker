@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Windows.Forms;
 
 namespace KeeLocker
 {
@@ -42,7 +43,6 @@ namespace KeeLocker
 			public Int64 rsp_48;
 		};
 
-
 		internal enum HRESULT
 		{
 			S_OK = unchecked((int)0x00000000),
@@ -56,6 +56,7 @@ namespace KeeLocker
 
 		[DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "GetVolumeNameForVolumeMountPointW")]
 		internal static extern bool GetVolumeNameForVolumeMountPoint(string lpszVolumeMountPoint, [Out] StringBuilder lpszVolumeName, uint cchBufferLength);
+
 		[DllImport("FVEAPI.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "FveAuthElementFromPassPhrase")]
 		internal static extern HRESULT FveAuthElementFromPassPhrase(string PassPhrase, ref FVE_AUTH_ELEMENT AuthElement);
 		[DllImport("FVEAPI.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "FveAuthElementFromRecoveryPassword")]
@@ -77,7 +78,7 @@ namespace KeeLocker
 
 		private static IntPtr StructToPointer(object Struct)
 		{
-			IntPtr Pointer = Marshal.AllocHGlobal(	Marshal.SizeOf(Struct) );
+			IntPtr Pointer = Marshal.AllocHGlobal(Marshal.SizeOf(Struct));
 			Marshal.StructureToPtr(Struct, Pointer, false);
 			return Pointer;
 		}
@@ -86,7 +87,7 @@ namespace KeeLocker
 		{
 			const int MaxVolumeNameLength = 50;
 			StringBuilder DriveGUIDWriter = new StringBuilder(MaxVolumeNameLength);
-			
+
 			bool Ok = GetVolumeNameForVolumeMountPoint(DriveMountPoint, DriveGUIDWriter, (uint)DriveGUIDWriter.MaxCapacity);
 			if (!Ok)
 			{
@@ -120,7 +121,8 @@ namespace KeeLocker
 
 				FVE_AUTH_ELEMENT AuthElement = new FVE_AUTH_ELEMENT();
 				Int32 SecretType;
-				if (IsRecoveryKey) {
+				if (IsRecoveryKey)
+				{
 					SecretType = (Int32)FVE_SECRET_TYPE.RecoveryPassword;
 
 					AuthElement.MagicValue = 32;
@@ -132,7 +134,9 @@ namespace KeeLocker
 						break;
 					}
 
-				} else {
+				}
+				else
+				{
 					SecretType = (Int32)FVE_SECRET_TYPE.PassPhrase;
 					AuthElement.MagicValue = 578;
 					AuthElement.MustBeOne = 1;
@@ -187,7 +191,7 @@ namespace KeeLocker
 
 				// Free the unmanaged memory.
 
-			} while(false);
+			} while (false);
 
 			if (ppAuthElement != (IntPtr)0)
 				Marshal.FreeHGlobal(ppAuthElement);
@@ -196,8 +200,109 @@ namespace KeeLocker
 				Marshal.FreeHGlobal(pAuthElement);
 
 			return R;
-			
-		}
-	}
 
+		}
+
+        internal enum NTSTATUS
+        {
+            S_OK = unchecked((int)0x00000000),
+        }
+
+		internal const ulong WNF_FVE_STATE_CHANGE = 0x4183182BA3BC3875UL;
+
+
+        [DllImport("ntdll.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "RtlSubscribeWnfStateChangeNotification")]
+        internal static extern NTSTATUS RtlSubscribeWnfStateChangeNotification(out IntPtr Subscription, ulong StateName, int ChangeStamp, IntPtr Callback, IntPtr CallbackContext, IntPtr TypeId, int SerializationGroup, int Unknown);
+        [DllImport("ntdll.dll", SetLastError = true, CharSet = CharSet.Unicode, EntryPoint = "RtlUnsubscribeWnfStateChangeNotification")]
+        internal static extern NTSTATUS RtlUnsubscribeWnfStateChangeNotification(IntPtr Subscription);
+
+        public delegate void TOnStateChangeDelegate();
+
+        public delegate int TCallbackDelegate(
+                    ulong StateName,
+                    int ChangeStamp,
+                    IntPtr TypeId,
+                    IntPtr CallbackContext,
+                    IntPtr Buffer,
+                    int BufferSize);
+
+		internal struct SCallbackContext
+		{
+            public TOnStateChangeDelegate Callback;
+        };
+
+        public struct SSubscription
+		{
+			public TOnStateChangeDelegate OnStateChange; // Have to keep that to prevent GC
+            public IntPtr InternalPointer;
+			public TCallbackDelegate Callback;
+			public IntPtr CallbackContextPtr;
+
+            public void Clear() {
+                InternalPointer = IntPtr.Zero;
+            }
+            public bool IsValid()
+            {
+                return InternalPointer != IntPtr.Zero;
+            }
+        };
+
+
+
+        static private int OnWnfStateChange(
+            ulong stateName,
+            int nChangeStamp,
+            IntPtr pTypeId,
+            IntPtr pCallbackContext,
+            IntPtr pBuffer,
+            int nBufferSize)
+        {
+			if (stateName != WNF_FVE_STATE_CHANGE) 
+				return 0;
+
+			if (pCallbackContext == IntPtr.Zero) return 1;
+
+            SCallbackContext CallbackContext =  Marshal.PtrToStructure<SCallbackContext>(pCallbackContext);
+			CallbackContext.Callback();
+            return 0;
+        }
+
+        public static SSubscription StateChangeNotification_Subscribe(TOnStateChangeDelegate _OnStateChange  )
+		{
+            TCallbackDelegate Callback = new TCallbackDelegate(OnWnfStateChange);
+
+            SCallbackContext CallbackContext = new SCallbackContext();
+            CallbackContext.Callback = _OnStateChange;
+
+            IntPtr CallbackContextPtr = Marshal.AllocHGlobal(Marshal.SizeOf(CallbackContext));
+            Marshal.StructureToPtr(CallbackContext, CallbackContextPtr, false);
+           
+            IntPtr pSubscription = IntPtr.Zero;
+            NTSTATUS ntstatus = RtlSubscribeWnfStateChangeNotification(
+                out pSubscription,
+                WNF_FVE_STATE_CHANGE,
+                0,
+                Marshal.GetFunctionPointerForDelegate(Callback),
+                CallbackContextPtr,
+                IntPtr.Zero,
+                0,
+                0);
+
+            SSubscription R;
+			R.OnStateChange = _OnStateChange;
+            R.InternalPointer = pSubscription;
+            R.Callback = Callback;
+            R.CallbackContextPtr = CallbackContextPtr;
+            return R;
+		}
+
+		public static void StateChangeNotification_Unsubscribe(SSubscription Subscription)
+        {
+            if (Subscription.InternalPointer != IntPtr.Zero)
+            {
+                RtlUnsubscribeWnfStateChangeNotification(Subscription.InternalPointer);
+                Marshal.FreeHGlobal(Subscription.CallbackContextPtr);
+            }
+        }
+	}
 }

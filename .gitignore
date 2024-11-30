@@ -2,6 +2,7 @@
 *.userprefs
 *.suo
 /.vs
+/.keepassdev
 /KeeLocker/bin
 /KeeLocker/obj
 /KeeLocker_private_signing_key.p8

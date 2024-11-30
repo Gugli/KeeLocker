@@ -1,4 +1,6 @@
-﻿using System;
+﻿using KeePassLib;
+using System;
+using System.Collections.Generic;
 
 namespace KeeLocker
 {
@@ -8,6 +10,7 @@ namespace KeeLocker
 		public const string StringName_DriveGUID = "KeeLockerGUID";
 		public const string StringName_DriveIdType = "KeeLockerType";
 		public const string StringName_UnlockOnOpening = "KeeLockerOnOpening";
+		public const string StringName_UnlockOnConnection = "KeeLockerOnConnection";
 		public const string StringName_IsRecoveryKey = "KeeLockerIsRecoveryKey";
 
 		public const string StringName_Password = "Password";
@@ -18,8 +21,9 @@ namespace KeeLocker
 			GUID
 		}
 		internal KeePass.Plugins.IPluginHost m_host;
+        internal FveApi.SSubscription m_Subscription;
 
-		public override string UpdateUrl
+        public override string UpdateUrl
 		{
 			get
 			{
@@ -41,14 +45,19 @@ namespace KeeLocker
 
 			// register WindowAdded event : needed to add the options tab in the EditEntry window
 			KeePass.UI.GlobalWindowManager.WindowAdded += OnWindowAdded;
-			
-			return true;
+
+            m_Subscription = FveApi.StateChangeNotification_Subscribe(OnDriveConnected);
+
+            return true;
 		}
 
 		public override void Terminate()
 		{
-			// remove event listeners
-			KeePass.UI.GlobalWindowManager.WindowAdded -= OnWindowAdded;
+            FveApi.StateChangeNotification_Unsubscribe(m_Subscription);
+			m_Subscription.Clear();
+
+            // remove event listeners
+            KeePass.UI.GlobalWindowManager.WindowAdded -= OnWindowAdded;
 
 			m_host.MainWindow.FileOpened -= OnKPDBOpen;
 		}
@@ -66,17 +75,6 @@ namespace KeeLocker
 					UnlockThisDB.Enabled = DBIsOpen;
 				};
 				return UnlockThisDB;
-				/*
-				System.Windows.Forms.ToolStripMenuItem UnlockAll = new System.Windows.Forms.ToolStripMenuItem();
-				UnlockAll.Text = "Unlock volumes in all DBs";
-				UnlockAll.Click += this.UnlockAll;
-
-				System.Windows.Forms.ToolStripMenuItem Keelocker = new System.Windows.Forms.ToolStripMenuItem("Keelocker");
-				Keelocker.DropDownItems.Add(UnlockThisDB);
-				Keelocker.DropDownItems.Add(UnlockAll);
-
-				return Keelocker;
-				*/
 			}
 			else if (t == KeePass.Plugins.PluginMenuType.Entry)
 			{
@@ -188,30 +186,36 @@ namespace KeeLocker
 			}
 			return true;
 		}
-			
+		
+		enum EUnlockReason
+		{
+			DatabaseOpening,
+            DriveConnected,
+			UserRequest
+		};
+
 		private void OnKPDBOpen(object sender, KeePass.Forms.FileOpenedEventArgs e)
 		{
-			const bool IsDatabaseOpening = true;
-			UnlockDatabase(e.Database, IsDatabaseOpening);
+			UnlockDatabase(e.Database, EUnlockReason.DatabaseOpening);
 		}
 
-		private void UnlockAll(object sender, EventArgs e)
+		private void OnDriveConnected()
 		{
-			/*
-			foreach (KeePassLib.PwDatabase DB in Entries)
+			List<PwDatabase> OpenDatabases = m_host.MainWindow.DocumentManager.GetOpenDatabases();
+			foreach (KeePassLib.PwDatabase Database in OpenDatabases)
 			{
-				UnlockDatabase(DB);
-			}*/
-		}
+				UnlockDatabase(Database, EUnlockReason.DriveConnected);
+			}
+        }
 
 		private void UnlockThisDB(object sender, EventArgs e)
 		{
-			UnlockDatabase(m_host.MainWindow.ActiveDatabase, false);
+			UnlockDatabase(m_host.MainWindow.ActiveDatabase, EUnlockReason.UserRequest);
 		}
 
 		private void UnlockGroup(object sender, EventArgs e)
 		{
-			UnlockGroup(m_host.MainWindow.GetSelectedGroup(), false);
+			UnlockGroup(m_host.MainWindow.GetSelectedGroup(), EUnlockReason.UserRequest);
 		}
 
 		private void UnlockEntries(object sender, EventArgs e)
@@ -220,45 +224,49 @@ namespace KeeLocker
 			if (Entries == null) return;
 			foreach (KeePassLib.PwEntry Entry in Entries)
 			{
-				UnlockEntry(Entry, false);
+				UnlockEntry(Entry, EUnlockReason.UserRequest);
 			}
 		}
 
-		private void UnlockDatabase(KeePassLib.PwDatabase Database, bool IsDatabaseOpening)
+		private void UnlockDatabase(KeePassLib.PwDatabase Database, EUnlockReason UnlockReason)
 		{
-			UnlockGroup(Database.RootGroup, IsDatabaseOpening);
+			UnlockGroup(Database.RootGroup, UnlockReason);
 		}
 
-		private void UnlockGroup(KeePassLib.PwGroup Group, bool IsDatabaseOpening)
+		private void UnlockGroup(KeePassLib.PwGroup Group, EUnlockReason UnlockReason)
 		{
 			if (Group == null) return;
 			KeePassLib.Collections.PwObjectList<KeePassLib.PwEntry> AllEntries = Group.GetEntries(true);
 			foreach (KeePassLib.PwEntry Entry in AllEntries)
 			{
-				UnlockEntry(Entry, IsDatabaseOpening);
+				UnlockEntry(Entry, UnlockReason);
 			}
 		}
 
-		private void UnlockEntry(KeePassLib.PwEntry Entry, bool IsDatabaseOpening)
+		private void UnlockEntry(KeePassLib.PwEntry Entry, EUnlockReason UnlockReason)
 		{
 			if (Entry == null) return;
 			KeePassLib.Collections.ProtectedStringDictionary Strings = Entry.Strings;
 			KeePassLib.Security.ProtectedString DriveIdTypeStr = Strings.Get(StringName_DriveIdType);
 			KeePassLib.Security.ProtectedString DriveMountPoint = Strings.Get(StringName_DriveMountPoint);
 			KeePassLib.Security.ProtectedString DriveGUID = Strings.Get(StringName_DriveGUID);
-			KeePassLib.Security.ProtectedString UnlockOnOpening = Strings.Get(StringName_UnlockOnOpening);
-			KeePassLib.Security.ProtectedString IsRecoveryKey = Strings.Get(StringName_IsRecoveryKey);
+            KeePassLib.Security.ProtectedString UnlockOnOpening = Strings.Get(StringName_UnlockOnOpening);
+            KeePassLib.Security.ProtectedString UnlockOnConnection = Strings.Get(StringName_UnlockOnConnection);
+            KeePassLib.Security.ProtectedString IsRecoveryKey = Strings.Get(StringName_IsRecoveryKey);
 			KeePassLib.Security.ProtectedString Password = Strings.Get(StringName_Password);
-			bool UnlockOnOpening_bool = Forms.KeeLockerEntryTab.GetUnlockOnOpeningFromString(UnlockOnOpening);
-			bool IsRecoveryKey_bool = Forms.KeeLockerEntryTab.GetIsRecoveryKeyFromString(IsRecoveryKey);
+            bool UnlockOnOpening_bool = Forms.KeeLockerEntryTab.GetUnlockOnOpeningFromString(UnlockOnOpening);
+            bool UnlockOnConnection_bool = Forms.KeeLockerEntryTab.GetUnlockOnOpeningFromString(UnlockOnConnection);
+            bool IsRecoveryKey_bool = Forms.KeeLockerEntryTab.GetIsRecoveryKeyFromString(IsRecoveryKey);
 
 			if (Password == null)
 				return;
 
-			if (IsDatabaseOpening && !UnlockOnOpening_bool)
+			if (UnlockReason == EUnlockReason.DatabaseOpening && !UnlockOnOpening_bool)
 				return;
+            if (UnlockReason == EUnlockReason.DriveConnected && !UnlockOnConnection_bool)
+                return;
 
-			EDriveIdType DriveIdType = Forms.KeeLockerEntryTab.GetDriveIdTypeFromString(DriveIdTypeStr);
+            EDriveIdType DriveIdType = Forms.KeeLockerEntryTab.GetDriveIdTypeFromString(DriveIdTypeStr);
 
 			TryUnlockVolume(
 				DriveIdType == EDriveIdType.MountPoint && DriveMountPoint != null ? DriveMountPoint.ReadString() : "",
